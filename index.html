@@ -1,0 +1,261 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Squish Biz</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+        body { background: #fdf6ff; color: #333; }
+        header { background: #c77dff; color: white; padding: 25px; text-align: center; }
+        nav { display: flex; justify-content: center; background: #9d4edd; position: sticky; top: 0; z-index: 1000; }
+        nav a { color: white; padding: 15px 20px; text-decoration: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        nav a:hover { background: #7b2cbf; }
+
+        .page { display: none; padding: 30px; max-width: 1000px; margin: auto; animation: fadeIn 0.3s; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .hero { text-align: center; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        
+        .products { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-top: 20px; }
+        .product { 
+            background: white; padding: 15px; border-radius: 12px; text-align: center; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); transition: 0.3s; border: 1px solid #eee;
+        }
+        .product img { width: 100%; height: 160px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; }
+        
+        .basket-item { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid #9d4edd; }
+        .qty-badge { background: #9d4edd; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; margin-right: 5px; }
+        
+        .total-section { font-size: 1.5rem; font-weight: bold; margin: 20px 0; text-align: right; color: #7b2cbf; }
+        
+        .btn { background: #9d4edd; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; display: inline-block; text-decoration: none; transition: 0.2s; }
+        .btn:hover { background: #7b2cbf; transform: scale(1.02); }
+        .btn-add { width: 100%; margin-top: 10px; background: #c77dff; }
+        .btn-danger { background: #ff4d4d; }
+        .btn-clear { background: #666; margin-bottom: 15px; }
+
+        .notice-box { background: #fff3cd; color: #856404; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ffeeba; text-align: center; font-weight: bold; }
+
+        #order-form { background: #efe0ff; padding: 25px; border-radius: 12px; margin-top: 20px; display: none; border: 2px dashed #9d4edd; }
+        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; }
+
+        footer { background: #c77dff; color: white; text-align: center; padding: 40px 20px; margin-top: 50px; }
+
+        /* --- SQUISH AI STYLES --- */
+        #ai-widget { position: fixed; bottom: 20px; right: 20px; z-index: 3000; }
+        #ai-button { 
+            background: #7b2cbf; color: white; border: none; padding: 15px 25px; 
+            border-radius: 50px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+        }
+        #ai-chatbox { 
+            opacity: 0; transform: translateY(20px) scale(0.9); pointer-events: none;
+            display: flex; width: 320px; height: 450px; background: white; 
+            border-radius: 15px; box-shadow: 0 5px 25px rgba(0,0,0,0.2); 
+            flex-direction: column; overflow: hidden; border: 1px solid #ddd; margin-bottom: 10px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform-origin: bottom right;
+        }
+        #ai-chatbox.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+        #chat-header { background: #9d4edd; color: white; padding: 12px; text-align: center; font-weight: bold; }
+        #chat-messages { flex: 1; padding: 15px; overflow-y: auto; font-size: 0.9rem; display: flex; flex-direction: column; gap: 10px; background: #fafafa; }
+        .msg { padding: 8px 12px; border-radius: 12px; max-width: 85%; line-height: 1.4; animation: msgPop 0.3s ease; white-space: pre-wrap; }
+        @keyframes msgPop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .bot-msg { background: #f0e6ff; align-self: flex-start; color: #444; }
+        .user-msg { background: #9d4edd; color: white; align-self: flex-end; }
+        #chat-input-area { display: flex; padding: 10px; background: white; border-top: 1px solid #eee; }
+        #chat-input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; outline: none; margin: 0; }
+        #chat-send { background: #9d4edd; color: white; border: none; padding: 0 15px; margin-left: 8px; border-radius: 8px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>The Squish Biz</h1>
+    <p>Squishes to amaze!</p>
+</header>
+
+<nav>
+    <a onclick="showPage('home')">Home</a>
+    <a onclick="showPage('items')">Items</a>
+    <a onclick="showPage('basket')">Basket (<span id="basket-count">0</span>)</a>
+</nav>
+
+<section id="home" class="page active">
+    <div class="hero">
+        <h2>Welcome to The Squish Biz!</h2>
+        <p style="margin: 20px 0; line-height: 1.6;">The Squish Biz creates handmade squishies and stationary designed to bring a little joy to everyday life. Each squishy is carefully crafted with love. My stationary range features cute, creative designs that make writing, organising and studying more fun. Everything is made with attention to detail and a love for creativity, making each item special and one of a kind. Some items are now called "Extinct". These items can still be bought but are only available through special request on the Whatsapp channel. Limited Edition items can also be bought on special request.</p>
+        <a class="btn" href="https://whatsapp.com/channel/0029Vb7MnVQ0LKZNHtzicQ3P" target="_blank">Follow Us on WhatsApp</a>
+    </div>
+</section>
+
+<section id="items" class="page">
+    <div class="notice-box">📢 Collection only at the moment. Payment is taken in person. Any items with a coming soon image are available to purchase but just don't currently have an image.</div>
+    <h2>Our Items</h2>
+    <div id="product-list" class="products"></div>
+</section>
+
+<section id="basket" class="page">
+    <h2>Your Basket</h2>
+    <div id="basket-actions" style="text-align: right;">
+        <button id="clear-basket-btn" class="btn btn-clear" style="display:none;" onclick="clearBasket()">Remove All Items</button>
+    </div>
+    <div id="basket-contents"></div>
+    <div id="empty-msg" style="padding: 40px; text-align: center; background: #eee; border-radius: 10px;">Your basket is empty.</div>
+    <div class="total-section">Total: £<span id="total-price">0.00</span></div>
+    <button id="checkout-start-btn" class="btn" style="width: 100%; font-size: 1.2rem; display:none;" onclick="document.getElementById('order-form').style.display='block'">Place Order</button>
+
+    <form id="order-form">
+        <h3>Order Details</h3>
+        <input type="text" id="cust-name" placeholder="Full Name" required>
+        <input type="email" id="cust-email" placeholder="Email Address" required>
+        <textarea id="cust-comments" rows="3" placeholder="Comments"></textarea>
+        <button type="button" class="btn" style="width:100%; background:#4caf50;" onclick="sendToGoogleSheets()">Confirm Order</button>
+    </form>
+</section>
+
+<footer>
+    <p>© 2026 The Squish Biz | Owned by Mei | Website by Samuel</p>
+</footer>
+
+<script>
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyV6Pa66UHt_VlfBzk_WkGdUE6lziHv61HruUELP0jG4j7DCT7lsE3hD4ySrI4pFsYKsQ/exec";
+    const _0x4f2a = "VFNCMjY=";
+
+    const products = [
+        { id: "s-sq", name: "Small Soft Squish", price: 1.00, desc: "The smallest of the squishes.", img: "https://i.postimg.cc/3wmLJHm8/Gemini-Generated-Image-7bj02i7bj02i7bj0.png" },
+        { id: "m-sq", name: "Medium Soft Squish", price: 1.25, desc: "The second largest squish.", img: "https://i.postimg.cc/3wmLJHm8/Gemini-Generated-Image-7bj02i7bj02i7bj0.png" },
+        { id: "l-sq", name: "Large Soft Squish", price: 1.50, desc: "The biggest and best squish.", img: "https://i.postimg.cc/3wmLJHm8/Gemini-Generated-Image-7bj02i7bj02i7bj0.png" },
+        { id: "s-sl", name: "Small Slow-Rise Squish", price: 1.50, desc: "The smallest slow-rise squish.", img: "https://i.postimg.cc/3wmLJHm8/Gemini-Generated-Image-7bj02i7bj02i7bj0.png" },
+        { id: "m-sl", name: "Medium Slow-Rise Squish", price: 2.00, desc: "Bigger than small, but smaller than large!", img: "https://i.postimg.cc/3wmLJHm8/Gemini-Generated-Image-7bj02i7bj02i7bj0.png" },
+        { id: "l-sl", name: "Large Slow-Rise Squish", price: 2.50, desc: "The biggest and best slow-rise squish.", img: "https://i.postimg.cc/3wmLJHm8/Gemini-Generated-Image-7bj02i7bj02i7bj0.png" },
+        { id: "sp1", name: "Spin the wheel 1 spin", price: 2.50, desc: "One spin on the wheel. (results on WhatsApp).", img: "https://i.postimg.cc/C1MKgCfL/wheel.jpg" },
+        { id: "sp2", name: "Spin the wheel 2 spins", price: 4.50, desc: "Two spins on the wheel. (results on WhatsApp).", img: "https://i.postimg.cc/C1MKgCfL/wheel.jpg" },
+        { id: "sp3", name: "Spin the wheel 3 spins", price: 6.00, desc: "Three spins on the wheel. (results on WhatsApp).", img: "https://i.postimg.cc/C1MKgCfL/wheel.jpg" },
+	{ id: "vip-y", name: "Meal Deal", price: 3.50, desc: "To see what it includes, please visit our Whatsapp channel.", img: "https://i.postimg.cc/YSbgMn01/vip.png" },
+        { id: "vip-y", name: "VIP (Yearly)", price: 12.00, desc: "One year VIP pass! To see what it includes, please visit our Whatsapp channel.", img: "https://i.postimg.cc/YSbgMn01/vip.png" },
+        { id: "d-vip-y", name: "Diamond VIP (Yearly)", price: 36.00, desc: "One year Diamond VIP! To see what it includes, please visit our Whatsapp channel.", img: "https://i.postimg.cc/hGj8zWHz/Gemini-Generated-Image-79udyc79udyc79ud.png" },
+        { id: "vip-m", name: "Monthly VIP", price: 1.50, desc: "One month VIP pass! To see what it includes, please visit our Whatsapp channel.", img: "https://i.postimg.cc/c4zdyQdS/Gemini-Generated-Image-hluzk3hluzk3hluz.png" },
+        { id: "d-vip-m", name: "Monthly Diamond VIP", price: 3.50, desc: "One month Diamond VIP! To see what it includes, please visit our Whatsapp channel.", img: "https://i.postimg.cc/NMRKLdjq/Gemini-Generated-Image-z11fxaz11fxaz11f.png" },
+	{ id: "d-vip-m", name: "Birthday Deal", price: 0.00, desc: "If its your Birthday, you can get 2 squishes for the price of 1. The cheapest squish is free.", img: "https://i.postimg.cc/NMRKLdjq/Gemini-Generated-Image-z11fxaz11fxaz11f.png" },
+                        { id: "canc", name: "Cancellation Fee", price: 0.00, desc: "Half price you paid for order. Varies.", img: "https://i.postimg.cc/Bv4FHWR4/Gemini-Generated-Image-ga2opaga2opaga2o.png" }
+    ];
+    function showPage(pageId) {
+        document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+        document.getElementById(pageId).classList.add("active");
+        if(pageId === 'basket') renderBasket();
+        window.scrollTo(0,0);
+    }
+
+    function renderProducts() {
+        const container = document.getElementById('product-list');
+        container.innerHTML = products.map((p) => `
+            <div class="product">
+                <img src="${p.img}">
+                <h3>${p.name}</h3>
+                <p style="font-size: 0.8rem; color: #666;">${p.desc}</p>
+                <p><strong>£${p.price.toFixed(2)}</strong></p>
+                <button class="btn btn-add" onclick="addToBasket('${p.id}')">Add to Basket</button>
+            </div>
+        `).join('');
+    }
+
+    function addToBasket(id) {
+        basket[id] = (basket[id] || 0) + 1;
+        updateNavCount();
+        alert("Added!");
+    }
+
+    function clearBasket() {
+        if(confirm("Are you sure you want to remove all items?")) {
+            basket = {};
+            updateNavCount();
+            renderBasket();
+        }
+    }
+
+    function updateNavCount() {
+        document.getElementById('basket-count').innerText = Object.values(basket).reduce((a, b) => a + b, 0);
+    }
+
+    function renderBasket() {
+        const container = document.getElementById('basket-contents');
+        const clearBtn = document.getElementById('clear-basket-btn');
+        const keys = Object.keys(basket);
+        let total = 0;
+        
+        if (keys.length === 0) {
+            document.getElementById('empty-msg').style.display = "block";
+            document.getElementById('checkout-start-btn').style.display = "none";
+            clearBtn.style.display = "none";
+            container.innerHTML = "";
+        } else {
+            document.getElementById('empty-msg').style.display = "none";
+            document.getElementById('checkout-start-btn').style.display = "block";
+            clearBtn.style.display = "inline-block";
+            container.innerHTML = keys.map(id => {
+                const item = products.find(p => p.id === id);
+                total += (item.price * basket[id]);
+                return `<div class="basket-item"><div>${basket[id]}x ${item.name}</div><button class="btn btn-danger" onclick="delete basket['${id}']; renderBasket(); updateNavCount();">Remove</button></div>`;
+            }).join('');
+        }
+        document.getElementById('total-price').innerText = total.toFixed(2);
+    }
+
+    async function sendToGoogleSheets() {
+    const name = document.getElementById('cust-name').value.trim();
+    const email = document.getElementById('cust-email').value.trim();
+    const comments = document.getElementById('cust-comments').value.trim();
+
+    if (!name || !email) {
+        alert("Please fill in your name and email.");
+        return;
+    }
+
+    const orderItems = Object.keys(basket).map(id => {
+        const item = products.find(p => p.id === id);
+        return `${basket[id]}x ${item.name}`;
+    }).join(", ");
+
+    const total = document.getElementById('total-price').innerText;
+
+    const orderData = {
+        name: name,
+        email: email,
+        comments: comments,
+        items: orderItems,
+        total: total,
+        date: new Date().toLocaleString()
+    };
+
+    try {
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(orderData)
+        });
+
+        alert("Order sent successfully!");
+        
+        // Optional reset (does NOT change your structure)
+        basket = {};
+        updateNavCount();
+        renderBasket();
+        document.getElementById('order-form').reset();
+        document.getElementById('order-form').style.display = 'none';
+
+    } catch (error) {
+        alert("Error sending order. Please try again.");
+    }
+}
+    window.onload = renderProducts;
+    document.getElementById('chat-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') askAI(); });
+</script>
+</body>
+</html>
